@@ -2,14 +2,27 @@
 
 Turn any photo into **ASCII art**, **pixel art** or **1‑bit dithered prints**, right in your browser.
 
-No server, no install, no dependencies. Your image never leaves your device. The whole app is a single HTML file.
+No server, no install, no dependencies. Your image never leaves your device. Just plain HTML, CSS and JavaScript.
 
 ## Files
 
-| File | What it is |
+```
+├── glyph-darkroom.html             # the app
+├── glyph-darkroom-explained.html   # how the app works
+├── css/
+│   ├── glyph-darkroom.css
+│   └── glyph-darkroom-explained.css
+└── js/
+    ├── glyph-darkroom.js
+    └── glyph-darkroom-explained.js
+```
+
+| Page | What it is |
 | --- | --- |
 | [`glyph-darkroom.html`](glyph-darkroom.html) | The app. Open it in any modern browser. |
 | [`glyph-darkroom-explained.html`](glyph-darkroom-explained.html) | An illustrated, interactive walkthrough of how the app works: the pipeline, the luminance formula, dithering kernels and palette matching. |
+
+Keep the `css/` and `js/` folders next to the HTML files, since the pages load them by relative path.
 
 ## Getting started
 
