@@ -8,7 +8,156 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="css/glyph-darkroom-explained.css">
+<style>
+/* Base reset */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: one 1000px column; every section opens with a figure, caption states the claim, a little text after.
+   Same risograph palette as the app it explains. */
+:root {
+  --paper: #eceef3; --sheet: #f8f9fb; --ink: #17191f; --muted: #586070; --rule: #c9ced8;
+  --blue: #2f4fa0; --blue-soft: #dfe5f5; --pink: #d42a80; --pink-soft: #fbe0ee;
+  --green: #187a4c; --green-soft: #dcefe4; --mat: #dfe2e9;
+  --font-display: "Silkscreen", "Courier New", monospace;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13151a; --sheet: #1b1e25; --ink: #eceef3; --muted: #9aa2b2; --rule: #2e333e;
+    --blue: #8ea6ec; --blue-soft: #232c45; --pink: #ff6fb3; --pink-soft: #3b1d2d;
+    --green: #5fd39a; --green-soft: #173327; --mat: #0e1014;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #13151a; --sheet: #1b1e25; --ink: #eceef3; --muted: #9aa2b2; --rule: #2e333e;
+  --blue: #8ea6ec; --blue-soft: #232c45; --pink: #ff6fb3; --pink-soft: #3b1d2d;
+  --green: #5fd39a; --green-soft: #173327; --mat: #0e1014;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.page {
+  max-width: 1000px; margin: 0 auto;
+  padding-block: 44px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 68px;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.8rem); line-height: 1.05; }
+h1 .pk { color: var(--pink); }
+h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; max-width: 65ch; }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--blue-soft); padding: 1px 6px; border-radius: 5px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pink); }
+section { display: flex; flex-direction: column; gap: 16px; }
+.head { display: flex; flex-direction: column; gap: 6px; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 72ch; }
+figcaption strong { color: var(--ink); }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; width: 100%; min-width: 660px; height: auto; }
+
+/* svg paint */
+.n { fill: var(--sheet); stroke: var(--rule); stroke-width: 1.5; }
+.n-b { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.5; }
+.n-p { fill: var(--pink-soft); stroke: var(--pink); stroke-width: 1.5; }
+.n-g { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+.tx { fill: var(--ink); font-family: var(--font-body); font-size: 13px; }
+.tb { fill: var(--ink); font-family: var(--font-body); font-weight: 600; font-size: 14px; }
+.tm { fill: var(--muted); font-family: var(--font-body); font-size: 11.5px; }
+.tc { fill: var(--ink); font-family: var(--font-mono); font-size: 11.5px; }
+.tc-b { fill: var(--blue); font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; }
+.tc-p { fill: var(--pink); font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; }
+.e { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.e-p { fill: none; stroke: var(--pink); stroke-width: 1.8; }
+.ah { fill: var(--muted); } .ah-p { fill: var(--pink); }
+.dim { stroke: var(--blue); stroke-width: 1.2; fill: none; }
+.cellg { fill: none; stroke: var(--rule); stroke-width: 1; }
+.cell-hot { fill: var(--pink-soft); stroke: var(--pink); stroke-width: 1.5; }
+.cell-me { fill: var(--ink); }
+.cell-w { fill: var(--sheet); stroke: var(--rule); stroke-width: 1; }
+
+/* verdict */
+.verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 20px; align-items: center; }
+.stamp { font-family: var(--font-display); font-size: 1.6rem; color: var(--green); border: 3px solid var(--green); border-radius: 10px; padding: 6px 14px; transform: rotate(-4deg); white-space: nowrap; }
+.need { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.need th, .need td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.need th { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chip { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1.5px solid currentColor; white-space: nowrap; }
+.chip.ok { color: var(--green); }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { min-width: 560px; }
+
+/* luminance lab */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: center; }
+.lab-in { display: flex; flex-direction: column; gap: 14px; }
+.slider { display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
+.slider .row { display: flex; justify-content: space-between; }
+.slider output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; }
+#rR { accent-color: #d33; } #rG { accent-color: #2a2; } #rB { accent-color: #36c; }
+.lab-out { display: flex; flex-direction: column; gap: 12px; }
+.swatch-row { display: flex; align-items: center; gap: 14px; }
+.swatch { width: 64px; height: 64px; border-radius: 10px; border: 1px solid var(--rule); flex-shrink: 0; }
+.math { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.math b { color: var(--ink); }
+.ramp { display: flex; gap: 3px; flex-wrap: wrap; }
+.ramp span {
+  width: 30px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 1.15rem; border-radius: 6px; border: 1px solid var(--rule); background: var(--paper);
+}
+.ramp span.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+.ramp-idx { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+
+/* dithering small multiples */
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 14px; }
+.mult { display: flex; flex-direction: column; gap: 8px; }
+.mult canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 6px; border: 1px solid var(--rule); display: block; }
+.mult b { font-size: 0.9rem; }
+.mult span { font-size: 0.82rem; color: var(--muted); }
+
+/* kernels */
+.kernels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.kernel { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.kernel svg { width: 100%; max-width: 230px; height: auto; }
+.kernel p { font-size: 0.85rem; color: var(--muted); }
+
+/* code map */
+.codemap { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.fn { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--rule); background: var(--sheet); display: flex; flex-direction: column; gap: 4px; }
+.fn code { background: none; padding: 0; font-weight: 600; color: var(--blue); font-size: 0.86rem; }
+.fn span { font-size: 0.86rem; color: var(--muted); }
+.fn .tagline { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pink); }
+
+/* build steps */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; counter-reset: s; }
+.steps li { counter-increment: s; position: relative; padding: 0 0 18px 44px; }
+.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: 0;
+  width: 28px; height: 28px; border-radius: 6px; background: var(--ink); color: var(--paper);
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.8rem;
+}
+.steps li::after { content: ""; position: absolute; left: 13px; top: 32px; bottom: 4px; width: 2px; background: var(--rule); }
+.steps li:last-child::after { display: none; }
+.steps b { display: block; }
+.steps span { color: var(--muted); font-size: 0.92rem; }
+.honest { border-left: 4px solid var(--pink); padding: 12px 16px; background: var(--pink-soft); border-radius: 0 10px 10px 0; font-size: 0.92rem; max-width: 72ch; }
+
+footer { color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 760px) {
+  .lab { grid-template-columns: minmax(0, 1fr); }
+  .kernels { grid-template-columns: minmax(0, 1fr); }
+  .verdict { grid-template-columns: minmax(0, 1fr); }
+  .stamp { justify-self: start; }
+}
+</style>
 </head>
 <body>
 <main class="page">
@@ -305,7 +454,127 @@
   <footer>Explains <code>glyph-darkroom.html</code>. The live strips and the letter picker run the same formulas as the app.</footer>
 </main>
 
-<script src="js/glyph-darkroom-explained.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  // ---- Shrink figure: big grid -> small grid (shades from a soft sphere) ----
+  function shade(x, y, w, h) {
+    var dx = (x + 0.5) / w - 0.45, dy = (y + 0.5) / h - 0.4;
+    var d = Math.sqrt(dx * dx + dy * dy * 1.6);
+    return Math.max(0, Math.min(1, 1 - d * 1.7));
+  }
+  var big = $("bigGrid");
+  for (var y = 0; y < 18; y++) for (var x = 0; x < 24; x++) {
+    var v = shade(x, y, 24, 18), c = Math.round(30 + v * 210);
+    el("rect", { x: 20 + x * 10, y: 40 + y * 10, width: 10, height: 10, style: "fill:rgb(" + c + "," + Math.round(c * 0.75) + "," + Math.round(c * 0.55) + ")" }, big);
+  }
+  var small = $("smallGrid");
+  for (var sy = 0; sy < 6; sy++) for (var sx = 0; sx < 12; sx++) {
+    var sv = shade(sx * 2, sy * 3, 24, 18), sc = Math.round(30 + sv * 210);
+    el("rect", { x: 384 + sx * 16, y: 82 + sy * 16, width: 16, height: 16, style: "fill:rgb(" + sc + "," + Math.round(sc * 0.75) + "," + Math.round(sc * 0.55) + ")", "class": "cellg" }, small);
+  }
+
+  // ---- Luminance lab ----
+  var RAMP = " .:-=+*#%@";
+  var rampEl = $("ramp");
+  var cells = RAMP.split("").map(function (ch, i) {
+    var s = document.createElement("span"); s.textContent = ch === " " ? "␣" : ch; s.title = "position " + i;
+    rampEl.appendChild(s); return s;
+  });
+  function lab() {
+    var r = +$("rR").value, g = +$("rG").value, b = +$("rB").value;
+    $("oR").textContent = r; $("oG").textContent = g; $("oB").textContent = b;
+    $("sw").style.background = "rgb(" + r + "," + g + "," + b + ")";
+    var L = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    var idx = Math.min(RAMP.length - 1, Math.floor(L * RAMP.length));
+    $("math").innerHTML = "0.21×" + r + " + 0.72×" + g + " + 0.07×" + b + "<br>= <b>" + (L * 255).toFixed(1) + "</b> of 255 → <b>" + Math.round(L * 100) + "%</b> bright";
+    cells.forEach(function (c, i) { c.classList.toggle("on", i === idx); });
+    $("rampIdx").textContent = Math.round(L * 100) + "% × " + RAMP.length + " letters = position " + idx + " → \"" + (RAMP[idx] === " " ? "space" : RAMP[idx]) + "\"";
+  }
+  ["rR", "rG", "rB"].forEach(function (id) { $(id).addEventListener("input", lab); });
+  lab();
+
+  // ---- Dither strips (same maths as the app) ----
+  var W = 100, H = 24;
+  function gradient() { var L = new Float32Array(W * H); for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) L[y * W + x] = x / (W - 1); return L; }
+  function add(L, x, y, v) { if (x >= 0 && x < W && y < H) L[y * W + x] += v; }
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function dither(method) {
+    var L = gradient(), bits = new Uint8Array(W * H);
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var p = y * W + x, v = L[p], on;
+      if (method === "bay") on = v > (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
+      else on = v > 0.5;
+      bits[p] = on ? 1 : 0;
+      var err = v - (on ? 1 : 0);
+      if (method === "fs") { add(L, x + 1, y, err * 7 / 16); add(L, x - 1, y + 1, err * 3 / 16); add(L, x, y + 1, err * 5 / 16); add(L, x + 1, y + 1, err / 16); }
+      if (method === "atk") { var e = err / 8; add(L, x + 1, y, e); add(L, x + 2, y, e); add(L, x - 1, y + 1, e); add(L, x, y + 1, e); add(L, x + 1, y + 1, e); add(L, x, y + 2, e); }
+    }
+    return bits;
+  }
+  function paint(id, fn) {
+    var c = $(id), ctx = c.getContext("2d"), s = c.width / W;
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) { ctx.fillStyle = fn(x, y); ctx.fillRect(x * s, y * s, s, s); }
+  }
+  paint("d-src", function (x) { var g = Math.round(x / (W - 1) * 255); return "rgb(" + g + "," + g + "," + g + ")"; });
+  [["d-none", "none"], ["d-fs", "fs"], ["d-atk", "atk"], ["d-bay", "bay"]].forEach(function (pair) {
+    var bits = dither(pair[1]);
+    paint(pair[0], function (x, y) { return bits[y * W + x] ? "#f7f7f2" : "#111111"; });
+  });
+
+  // ---- Kernel diagrams ----
+  function kernel(id, cols, rows, me, weights, labelFn) {
+    var g = $(id), size = 40, ox = (230 - cols * size) / 2, oy = (130 - rows * size) / 2;
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var key = x + "," + y, w = weights[key];
+      var cls = (x === me[0] && y === me[1]) ? "cell-me" : (w !== undefined ? "cell-hot" : "cell-w");
+      el("rect", { x: ox + x * size, y: oy + y * size, width: size - 3, height: size - 3, rx: 5, "class": cls }, g);
+      var label = labelFn ? labelFn(x, y) : (w !== undefined ? w : "");
+      if (label !== "") {
+        var t = el("text", { x: ox + x * size + (size - 3) / 2, y: oy + y * size + (size - 3) / 2 + 4, "text-anchor": "middle", "class": "tc-p" }, g);
+        t.textContent = label;
+      }
+    }
+  }
+  kernel("k-fs", 3, 2, [1, 0], { "2,0": "7/16", "0,1": "3/16", "1,1": "5/16", "2,1": "1/16" });
+  kernel("k-atk", 4, 3, [1, 0], { "2,0": "1/8", "3,0": "1/8", "0,1": "1/8", "1,1": "1/8", "2,1": "1/8", "1,2": "1/8" });
+  var BM = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  (function () {
+    var g = $("k-bay"), size = 28, ox = (230 - 4 * size) / 2, oy = (130 - 4 * size) / 2;
+    for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) {
+      var v = BM[y * 4 + x];
+      el("rect", { x: ox + x * size, y: oy + y * size, width: size - 2, height: size - 2, rx: 4, "class": "cell-w", style: "fill-opacity:1" }, g);
+      var t = el("text", { x: ox + x * size + (size - 2) / 2, y: oy + y * size + (size - 2) / 2 + 4, "text-anchor": "middle", "class": "tc" }, g);
+      t.textContent = v;
+    }
+  })();
+
+  // ---- Palette match row ----
+  var PICO = ["#000000","#1d2b53","#7e2553","#008751","#ab5236","#5f574f","#c2c3c7","#fff1e8","#ff004d","#ffa300","#ffec27","#00e436","#29adff","#83769c","#ff77a8","#ffccaa"];
+  var px = [232, 128, 60];
+  function rgb(h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  var dists = PICO.map(function (h) { var c = rgb(h), dr = px[0] - c[0], dg = px[1] - c[1], db = px[2] - c[2]; return Math.sqrt(dr * dr * 0.3 + dg * dg * 0.59 + db * db * 0.11); });
+  var best = dists.indexOf(Math.min.apply(null, dists));
+  var row = $("palRow");
+  PICO.forEach(function (h, i) {
+    var x = 200 + i * 40, isBest = i === best;
+    el("rect", { x: x, y: isBest ? 58 : 66, width: 34, height: isBest ? 64 : 48, rx: 6, style: "fill:" + h, stroke: isBest ? "currentColor" : "none", "stroke-width": isBest ? 3 : 0, "class": isBest ? "" : "" }, row);
+    var t = el("text", { x: x + 17, y: 144, "text-anchor": "middle", "class": isBest ? "tc-p" : "tm" }, row);
+    t.textContent = Math.round(dists[i]);
+  });
+  var lbl = el("text", { x: 200 + best * 40 + 17, y: 48, "text-anchor": "middle", "class": "tc-p" }, row);
+  lbl.textContent = "closest";
+})();
+</script>
 
 </body>
 </html>

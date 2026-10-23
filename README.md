@@ -8,13 +8,11 @@ No server, no install, no dependencies. Your image never leaves your device. Jus
 
 ```
 ├── glyph-darkroom.html             # the app
-├── glyph-darkroom-explained.html   # how the app works
+├── glyph-darkroom-explained.html   # how the app works (self-contained)
 ├── css/
-│   ├── glyph-darkroom.css
-│   └── glyph-darkroom-explained.css
+│   └── glyph-darkroom.css
 └── js/
-    ├── glyph-darkroom.js
-    └── glyph-darkroom-explained.js
+    └── glyph-darkroom.js
 ```
 
 | Page | What it is |
@@ -22,7 +20,7 @@ No server, no install, no dependencies. Your image never leaves your device. Jus
 | [`glyph-darkroom.html`](glyph-darkroom.html) | The app. Open it in any modern browser. |
 | [`glyph-darkroom-explained.html`](glyph-darkroom-explained.html) | An illustrated, interactive walkthrough of how the app works: the pipeline, the luminance formula, dithering kernels and palette matching. |
 
-Keep the `css/` and `js/` folders next to the HTML files, since the pages load them by relative path.
+Keep the `css/` and `js/` folders next to `glyph-darkroom.html`, since the app loads them by relative path. The explainer page has everything inline and works on its own.
 
 ## Getting started
 
