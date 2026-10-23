@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Inside Glyph Darkroom</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one 1000px column; every section opens with a figure, caption states the claim, a little text after.
+   Same risograph palette as the app it explains. */
+:root {
+  --paper: #eceef3; --sheet: #f8f9fb; --ink: #17191f; --muted: #586070; --rule: #c9ced8;
+  --blue: #2f4fa0; --blue-soft: #dfe5f5; --pink: #d42a80; --pink-soft: #fbe0ee;
+  --green: #187a4c; --green-soft: #dcefe4; --mat: #dfe2e9;
+  --font-display: "Silkscreen", "Courier New", monospace;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13151a; --sheet: #1b1e25; --ink: #eceef3; --muted: #9aa2b2; --rule: #2e333e;
+    --blue: #8ea6ec; --blue-soft: #232c45; --pink: #ff6fb3; --pink-soft: #3b1d2d;
+    --green: #5fd39a; --green-soft: #173327; --mat: #0e1014;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #13151a; --sheet: #1b1e25; --ink: #eceef3; --muted: #9aa2b2; --rule: #2e333e;
+  --blue: #8ea6ec; --blue-soft: #232c45; --pink: #ff6fb3; --pink-soft: #3b1d2d;
+  --green: #5fd39a; --green-soft: #173327; --mat: #0e1014;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.page {
+  max-width: 1000px; margin: 0 auto;
+  padding-block: 44px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 68px;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.8rem); line-height: 1.05; }
+h1 .pk { color: var(--pink); }
+h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; max-width: 65ch; }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--blue-soft); padding: 1px 6px; border-radius: 5px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pink); }
+section { display: flex; flex-direction: column; gap: 16px; }
+.head { display: flex; flex-direction: column; gap: 6px; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+figcaption { color: var(--muted); font-size: 0.92rem; max-width: 72ch; }
+figcaption strong { color: var(--ink); }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; width: 100%; min-width: 660px; height: auto; }
+
+/* svg paint */
+.n { fill: var(--sheet); stroke: var(--rule); stroke-width: 1.5; }
+.n-b { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.5; }
+.n-p { fill: var(--pink-soft); stroke: var(--pink); stroke-width: 1.5; }
+.n-g { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+.tx { fill: var(--ink); font-family: var(--font-body); font-size: 13px; }
+.tb { fill: var(--ink); font-family: var(--font-body); font-weight: 600; font-size: 14px; }
+.tm { fill: var(--muted); font-family: var(--font-body); font-size: 11.5px; }
+.tc { fill: var(--ink); font-family: var(--font-mono); font-size: 11.5px; }
+.tc-b { fill: var(--blue); font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; }
+.tc-p { fill: var(--pink); font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; }
+.e { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.e-p { fill: none; stroke: var(--pink); stroke-width: 1.8; }
+.ah { fill: var(--muted); } .ah-p { fill: var(--pink); }
+.dim { stroke: var(--blue); stroke-width: 1.2; fill: none; }
+.cellg { fill: none; stroke: var(--rule); stroke-width: 1; }
+.cell-hot { fill: var(--pink-soft); stroke: var(--pink); stroke-width: 1.5; }
+.cell-me { fill: var(--ink); }
+.cell-w { fill: var(--sheet); stroke: var(--rule); stroke-width: 1; }
+
+/* verdict */
+.verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 20px; align-items: center; }
+.stamp { font-family: var(--font-display); font-size: 1.6rem; color: var(--green); border: 3px solid var(--green); border-radius: 10px; padding: 6px 14px; transform: rotate(-4deg); white-space: nowrap; }
+.need { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.need th, .need td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.need th { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chip { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1.5px solid currentColor; white-space: nowrap; }
+.chip.ok { color: var(--green); }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { min-width: 560px; }
+
+/* luminance lab */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: center; }
+.lab-in { display: flex; flex-direction: column; gap: 14px; }
+.slider { display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
+.slider .row { display: flex; justify-content: space-between; }
+.slider output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; }
+#rR { accent-color: #d33; } #rG { accent-color: #2a2; } #rB { accent-color: #36c; }
+.lab-out { display: flex; flex-direction: column; gap: 12px; }
+.swatch-row { display: flex; align-items: center; gap: 14px; }
+.swatch { width: 64px; height: 64px; border-radius: 10px; border: 1px solid var(--rule); flex-shrink: 0; }
+.math { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.math b { color: var(--ink); }
+.ramp { display: flex; gap: 3px; flex-wrap: wrap; }
+.ramp span {
+  width: 30px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 1.15rem; border-radius: 6px; border: 1px solid var(--rule); background: var(--paper);
+}
+.ramp span.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+.ramp-idx { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+
+/* dithering small multiples */
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 14px; }
+.mult { display: flex; flex-direction: column; gap: 8px; }
+.mult canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 6px; border: 1px solid var(--rule); display: block; }
+.mult b { font-size: 0.9rem; }
+.mult span { font-size: 0.82rem; color: var(--muted); }
+
+/* kernels */
+.kernels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.kernel { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.kernel svg { width: 100%; max-width: 230px; height: auto; }
+.kernel p { font-size: 0.85rem; color: var(--muted); }
+
+/* code map */
+.codemap { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.fn { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--rule); background: var(--sheet); display: flex; flex-direction: column; gap: 4px; }
+.fn code { background: none; padding: 0; font-weight: 600; color: var(--blue); font-size: 0.86rem; }
+.fn span { font-size: 0.86rem; color: var(--muted); }
+.fn .tagline { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pink); }
+
+/* build steps */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; counter-reset: s; }
+.steps li { counter-increment: s; position: relative; padding: 0 0 18px 44px; }
+.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: 0;
+  width: 28px; height: 28px; border-radius: 6px; background: var(--ink); color: var(--paper);
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.8rem;
+}
+.steps li::after { content: ""; position: absolute; left: 13px; top: 32px; bottom: 4px; width: 2px; background: var(--rule); }
+.steps li:last-child::after { display: none; }
+.steps b { display: block; }
+.steps span { color: var(--muted); font-size: 0.92rem; }
+.honest { border-left: 4px solid var(--pink); padding: 12px 16px; background: var(--pink-soft); border-radius: 0 10px 10px 0; font-size: 0.92rem; max-width: 72ch; }
+
+footer { color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 760px) {
+  .lab { grid-template-columns: minmax(0, 1fr); }
+  .kernels { grid-template-columns: minmax(0, 1fr); }
+  .verdict { grid-template-columns: minmax(0, 1fr); }
+  .stamp { justify-self: start; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <!-- HERO -->
+  <section aria-labelledby="h1">
+    <span class="eyebrow">How it was built</span>
+    <h1 id="h1">Inside Glyph <span class="pk">Darkroom</span></h1>
+    <p class="lead">Every style follows the same idea: shrink the photo to a small grid, read each cell's colour, then decide what to draw in that cell.</p>
+    <figure>
+      <div class="panel scroll">
+        <svg viewBox="0 0 980 300" role="img" aria-label="Pipeline from image file to output">
+          <defs>
+            <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker>
+            <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-p" d="M0,0L10,5L0,10z"/></marker>
+          </defs>
+          <!-- 1 file -->
+          <rect class="n" x="10" y="100" width="120" height="76" rx="10"/>
+          <text class="tb" x="70" y="128" text-anchor="middle">Your image</text>
+          <text class="tm" x="70" y="147" text-anchor="middle">file · drop · paste</text>
+          <text class="tc" x="70" y="164" text-anchor="middle">1200 × 800 px</text>
+          <path class="e" d="M130 138 H168" marker-end="url(#a)"/>
+          <text class="tm" x="149" y="128" text-anchor="middle">decode</text>
+
+          <!-- 2 shrink -->
+          <rect class="n-b" x="170" y="100" width="140" height="76" rx="10"/>
+          <text class="tb" x="240" y="128" text-anchor="middle">Shrink</text>
+          <text class="tc-b" x="240" y="147" text-anchor="middle">drawImage()</text>
+          <text class="tc" x="240" y="164" text-anchor="middle">→ 110 × 39 cells</text>
+          <path class="e" d="M310 138 H348" marker-end="url(#a)"/>
+
+          <!-- 3 read -->
+          <rect class="n-b" x="350" y="100" width="150" height="76" rx="10"/>
+          <text class="tb" x="425" y="128" text-anchor="middle">Read pixels</text>
+          <text class="tc-b" x="425" y="147" text-anchor="middle">getImageData()</text>
+          <text class="tc" x="425" y="164" text-anchor="middle">[r,g,b,a, r,g,b,a …]</text>
+          <path class="e" d="M500 138 H538" marker-end="url(#a)"/>
+
+          <!-- 4 adjust -->
+          <rect class="n-b" x="540" y="100" width="120" height="76" rx="10"/>
+          <text class="tb" x="600" y="128" text-anchor="middle">Adjust</text>
+          <text class="tm" x="600" y="147" text-anchor="middle">brightness</text>
+          <text class="tm" x="600" y="163" text-anchor="middle">contrast</text>
+
+          <!-- branch -->
+          <path class="e-p" d="M660 138 C 690 138, 690 48, 720 48" marker-end="url(#ap)"/>
+          <path class="e-p" d="M660 138 H718" marker-end="url(#ap)"/>
+          <path class="e-p" d="M660 138 C 690 138, 690 228, 720 228" marker-end="url(#ap)"/>
+          <text class="tm" x="690" y="100" text-anchor="middle">your</text>
+          <text class="tm" x="690" y="186" text-anchor="middle">choice</text>
+
+          <rect class="n-p" x="722" y="18" width="128" height="60" rx="10"/>
+          <text class="tb" x="786" y="43" text-anchor="middle">ASCII</text>
+          <text class="tm" x="786" y="62" text-anchor="middle">brightness → letter</text>
+          <rect class="n-p" x="722" y="108" width="128" height="60" rx="10"/>
+          <text class="tb" x="786" y="133" text-anchor="middle">Pixel</text>
+          <text class="tm" x="786" y="152" text-anchor="middle">colour → palette</text>
+          <rect class="n-p" x="722" y="198" width="128" height="60" rx="10"/>
+          <text class="tb" x="786" y="223" text-anchor="middle">1‑bit</text>
+          <text class="tm" x="786" y="242" text-anchor="middle">brightness → dot</text>
+
+          <path class="e" d="M850 48 C 880 48, 880 138, 898 138" marker-end="url(#a)"/>
+          <path class="e" d="M850 138 H898" marker-end="url(#a)"/>
+          <path class="e" d="M850 228 C 880 228, 880 138, 898 138" marker-end="url(#a)"/>
+          <rect class="n-g" x="900" y="104" width="72" height="68" rx="10"/>
+          <text class="tb" x="936" y="132" text-anchor="middle">Draw</text>
+          <text class="tm" x="936" y="150" text-anchor="middle">canvas</text>
+          <text class="tm" x="936" y="164" text-anchor="middle">→ PNG</text>
+
+          <text class="tm" x="425" y="230" text-anchor="middle">runs again on every slider move, at most once per frame</text>
+          <text class="tc" x="425" y="248" text-anchor="middle">requestAnimationFrame(render)</text>
+        </svg>
+      </div>
+      <figcaption><strong>Six steps, all inside the browser.</strong> The photo never leaves the device. The only thing that changes between the three styles is the pink step.</figcaption>
+    </figure>
+  </section>
+
+  <!-- VERDICT -->
+  <section aria-labelledby="h-v">
+    <div class="head">
+      <span class="eyebrow">Was it doable?</span>
+      <h2 id="h-v">Yes, with only what browsers already have</h2>
+    </div>
+    <div class="panel verdict">
+      <span class="stamp" aria-hidden="true">DOABLE</span>
+      <div class="table-wrap">
+        <table class="need">
+          <thead><tr><th>The app needs to…</th><th>Built-in tool</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Open a picture the user picks</td><td><code>&lt;input type="file"&gt;</code>, drag events, the <code>paste</code> event</td><td><span class="chip ok">built in</span></td></tr>
+            <tr><td>Shrink it and read every pixel</td><td>Canvas <code>drawImage</code> + <code>getImageData</code></td><td><span class="chip ok">built in</span></td></tr>
+            <tr><td>Draw letters or squares</td><td>Canvas <code>fillText</code> + <code>fillRect</code></td><td><span class="chip ok">built in</span></td></tr>
+            <tr><td>Turn the result into a file</td><td><code>canvas.toBlob()</code>, <code>Blob</code></td><td><span class="chip ok">built in</span></td></tr>
+            <tr><td>Copy the ASCII text</td><td><code>navigator.clipboard.writeText</code></td><td><span class="chip ok">built in</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p>No server, no database, no npm package and no AI model. That's why it fits in one 31 KB HTML file.</p>
+  </section>
+
+  <!-- SHRINK -->
+  <section aria-labelledby="h-s">
+    <div class="head">
+      <span class="eyebrow">Step 2 · Shrink</span>
+      <h2 id="h-s">One cell becomes one letter, so the photo must shrink first</h2>
+    </div>
+    <figure>
+      <div class="panel scroll">
+        <svg viewBox="0 0 900 270" role="img" aria-label="A large image is averaged down to a small grid; character cells are taller than wide">
+          <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
+          <!-- big photo grid -->
+          <g id="bigGrid"></g>
+          <text class="tb" x="140" y="252" text-anchor="middle">1200 × 800 photo</text>
+          <path class="e" d="M300 130 H368" marker-end="url(#a2)"/>
+          <text class="tm" x="334" y="118" text-anchor="middle">average</text>
+          <text class="tm" x="334" y="150" text-anchor="middle">each block</text>
+          <g id="smallGrid"></g>
+          <text class="tb" x="480" y="252" text-anchor="middle">12 × 6 cells</text>
+          <!-- char cell -->
+          <rect class="n-b" x="690" y="50" width="84" height="157" rx="4"/>
+          <text class="tc" x="732" y="146" text-anchor="middle" style="font-size:96px">@</text>
+          <path class="dim" d="M690 222 H774 M690 216 V228 M774 216 V228"/>
+          <text class="tc-b" x="732" y="244" text-anchor="middle">8.4 px wide</text>
+          <path class="dim" d="M794 50 V207 M788 50 H800 M788 207 H800"/>
+          <text class="tc-b" x="806" y="132">16 px tall</text>
+        </svg>
+      </div>
+      <figcaption><strong>Letters are about twice as tall as they are wide.</strong> If the grid kept the photo's shape, the ASCII would come out stretched. So the code uses fewer rows: <code>rows = cols × (height ÷ width) × (8.4 ÷ 16)</code>. Pixel and 1‑bit cells are square, so they skip that last factor.</figcaption>
+    </figure>
+  </section>
+
+  <!-- LUMINANCE LAB -->
+  <section aria-labelledby="h-l">
+    <div class="head">
+      <span class="eyebrow">ASCII · Interactive</span>
+      <h2 id="h-l">How one colour picks one letter</h2>
+    </div>
+    <figure>
+      <div class="panel lab">
+        <div class="lab-in">
+          <div class="slider"><div class="row"><label for="rR">Red</label><output id="oR" for="rR"></output></div><input type="range" id="rR" min="0" max="255" value="240"></div>
+          <div class="slider"><div class="row"><label for="rG">Green</label><output id="oG" for="rG"></output></div><input type="range" id="rG" min="0" max="255" value="120"></div>
+          <div class="slider"><div class="row"><label for="rB">Blue</label><output id="oB" for="rB"></output></div><input type="range" id="rB" min="0" max="255" value="60"></div>
+        </div>
+        <div class="lab-out">
+          <div class="swatch-row">
+            <div class="swatch" id="sw"></div>
+            <div class="math" id="math"></div>
+          </div>
+          <div class="ramp" id="ramp" aria-label="Character ramp"></div>
+          <div class="ramp-idx" id="rampIdx"></div>
+        </div>
+      </div>
+      <figcaption><strong>Green counts most because eyes are most sensitive to it.</strong> The formula weighs green 0.72, red 0.21 and blue just 0.07, then picks the letter at that position in the ramp. On a black print, bright pixels get dense letters like <code>@</code>.</figcaption>
+    </figure>
+  </section>
+
+  <!-- DITHER MULTIPLES -->
+  <section aria-labelledby="h-d">
+    <div class="head">
+      <span class="eyebrow">1‑bit · Live</span>
+      <h2 id="h-d">Only black and white, yet the gradient survives</h2>
+    </div>
+    <figure>
+      <div class="multiples">
+        <div class="mult"><canvas id="d-src" width="200" height="48"></canvas><b>Original gradient</b><span>256 shades of grey</span></div>
+        <div class="mult"><canvas id="d-none" width="200" height="48"></canvas><b>Hard threshold</b><span>above 50% → white, else black</span></div>
+        <div class="mult"><canvas id="d-fs" width="200" height="48"></canvas><b>Floyd–Steinberg</b><span>passes all the error on</span></div>
+        <div class="mult"><canvas id="d-atk" width="200" height="48"></canvas><b>Atkinson</b><span>passes only ¾ on, so it stays crisp</span></div>
+        <div class="mult"><canvas id="d-bay" width="200" height="48"></canvas><b>Bayer 4×4</b><span>a fixed pattern, no error at all</span></div>
+      </div>
+      <figcaption><strong>Dithering fakes grey by mixing dot density.</strong> These five strips are drawn by the same code the app uses, running on this page right now. Hard threshold throws away everything in between.</figcaption>
+    </figure>
+
+    <div class="kernels">
+      <div class="kernel">
+        <svg viewBox="0 0 230 130" role="img" aria-label="Floyd–Steinberg kernel">
+          <g id="k-fs"></g>
+        </svg>
+        <h3>Floyd–Steinberg</h3>
+        <p>The rounding error from the current dot (black) is split 7, 3, 5, 1 sixteenths to the neighbours not yet drawn.</p>
+      </div>
+      <div class="kernel">
+        <svg viewBox="0 0 230 130" role="img" aria-label="Atkinson kernel">
+          <g id="k-atk"></g>
+        </svg>
+        <h3>Atkinson</h3>
+        <p>Six neighbours get ⅛ each. Two eighths are simply dropped, which is why it looks punchier. Bill Atkinson used it on the first Macintosh.</p>
+      </div>
+      <div class="kernel">
+        <svg viewBox="0 0 230 130" role="img" aria-label="Bayer 4 by 4 matrix">
+          <g id="k-bay"></g>
+        </svg>
+        <h3>Bayer matrix</h3>
+        <p>Each position has its own threshold from 0 to 15. The repeating tile gives the classic crosshatch look.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIXEL -->
+  <section aria-labelledby="h-p">
+    <div class="head">
+      <span class="eyebrow">Pixel art</span>
+      <h2 id="h-p">Each colour snaps to the closest one in the palette</h2>
+    </div>
+    <figure>
+      <div class="panel scroll">
+        <svg viewBox="0 0 860 190" role="img" aria-label="An orange pixel is matched to the nearest PICO-8 colour">
+          <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
+          <rect x="20" y="50" width="80" height="80" rx="8" style="fill:#e8803c" stroke="currentColor" stroke-opacity=".2"/>
+          <text class="tc" x="60" y="152" text-anchor="middle">rgb(232,128,60)</text>
+          <text class="tm" x="60" y="40" text-anchor="middle">photo pixel</text>
+          <path class="e" d="M110 90 H190" marker-end="url(#a3)"/>
+          <text class="tm" x="150" y="80" text-anchor="middle">measure</text>
+          <text class="tm" x="150" y="108" text-anchor="middle">distance</text>
+          <g id="palRow"></g>
+          <text class="tm" x="520" y="178" text-anchor="middle">PICO‑8 palette · the shortest distance wins</text>
+        </svg>
+      </div>
+      <figcaption><strong>"Closest" means the smallest weighted gap in red, green and blue.</strong> Green differences count 0.59, red 0.3 and blue 0.11, so the match looks right to the eye. With dithering on, the leftover error is passed to the neighbours, exactly like the 1‑bit kernels above.</figcaption>
+    </figure>
+  </section>
+
+  <!-- SAVING -->
+  <section aria-labelledby="h-save">
+    <div class="head">
+      <span class="eyebrow">Saving</span>
+      <h2 id="h-save">One button, two different ways to save</h2>
+    </div>
+    <figure>
+      <div class="panel scroll">
+        <svg viewBox="0 0 900 230" role="img" aria-label="Save button branches depending on where the page is open">
+          <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker></defs>
+          <rect class="n" x="20" y="85" width="140" height="60" rx="10"/>
+          <text class="tb" x="90" y="112" text-anchor="middle">Save PNG</text>
+          <text class="tc" x="90" y="131" text-anchor="middle">canvas.toBlob()</text>
+          <path class="e" d="M160 115 H218" marker-end="url(#a4)"/>
+          <rect class="n-b" x="220" y="80" width="190" height="70" rx="10"/>
+          <text class="tb" x="315" y="108" text-anchor="middle">Where am I open?</text>
+          <text class="tc-b" x="315" y="128" text-anchor="middle">window.claude exists?</text>
+          <path class="e" d="M410 105 C 450 105, 450 50, 488 50" marker-end="url(#a4)"/>
+          <path class="e" d="M410 125 C 450 125, 450 180, 488 180" marker-end="url(#a4)"/>
+          <text class="tm" x="452" y="66" text-anchor="middle">yes</text>
+          <text class="tm" x="452" y="172" text-anchor="middle">no</text>
+          <rect class="n-p" x="490" y="18" width="380" height="64" rx="10"/>
+          <text class="tb" x="510" y="44">claude.ai page</text>
+          <text class="tc" x="510" y="64">claude.use("downloads").save() → you confirm first</text>
+          <rect class="n-g" x="490" y="148" width="380" height="64" rx="10"/>
+          <text class="tb" x="510" y="174">Local .html file</text>
+          <text class="tc" x="510" y="194">&lt;a download&gt; link clicked by code → Downloads folder</text>
+        </svg>
+      </div>
+      <figcaption><strong>claude.ai pages can't download files by themselves.</strong> They have to ask through a "downloads" permission, which shows you a prompt. A plain HTML file on your computer has no such rule, so it uses the ordinary link trick.</figcaption>
+    </figure>
+  </section>
+
+  <!-- CODE MAP -->
+  <section aria-labelledby="h-code">
+    <div class="head">
+      <span class="eyebrow">Code map</span>
+      <h2 id="h-code">The script, function by function</h2>
+    </div>
+    <div class="codemap">
+      <div class="fn"><span class="tagline">start</span><code>makeSample()</code><span>Draws the ringed planet on a hidden canvas, so the page shows a result before you upload anything.</span></div>
+      <div class="fn"><span class="tagline">input</span><code>loadFile(file)</code><span>Checks it's an image, turns it into an <code>&lt;img&gt;</code> with <code>URL.createObjectURL</code>, then renders.</span></div>
+      <div class="fn"><span class="tagline">shared</span><code>sample(cols, rows)</code><span>Shrinks the image onto a small hidden canvas and returns its pixel array.</span></div>
+      <div class="fn"><span class="tagline">shared</span><code>adjust(data)</code><span>Applies brightness and contrast, and puts transparent areas on white.</span></div>
+      <div class="fn"><span class="tagline">ascii</span><code>renderAscii(cols)</code><span>Brightness → ramp letter, drawn with <code>fillText</code>. It also builds the plain-text copy.</span></div>
+      <div class="fn"><span class="tagline">pixel</span><code>renderPixel</code> · <code>nearest</code> · <code>spread</code><span>Snaps each colour to the palette, spreads the error, then draws big squares.</span></div>
+      <div class="fn"><span class="tagline">1-bit</span><code>renderBit(cols)</code><span>Threshold or dither to on/off dots, then draws them in the chosen ink colours.</span></div>
+      <div class="fn"><span class="tagline">speed</span><code>schedule()</code> · <code>render()</code><span>Many slider events become one redraw per screen frame, so dragging stays smooth.</span></div>
+      <div class="fn"><span class="tagline">output</span><code>saveBlob()</code> · copy button<span>The save path from the figure above, plus clipboard copy with a "select the text" fallback.</span></div>
+    </div>
+  </section>
+
+  <!-- HOW I BUILT IT -->
+  <section aria-labelledby="h-build">
+    <div class="head">
+      <span class="eyebrow">The process</span>
+      <h2 id="h-build">How I built it, in order</h2>
+    </div>
+    <ol class="steps">
+      <li><b>Chose browser-only</b><span>Image conversion is pure maths on pixels, so a server would only add cost and a privacy risk.</span></li>
+      <li><b>Picked three styles that share one pipeline</b><span>ASCII, pixel and 1‑bit all start with "shrink and read pixels". Only the drawing step differs.</span></li>
+      <li><b>Used known algorithms instead of inventing them</b><span>The luminance weights (Rec. 709), Floyd–Steinberg, Atkinson and Bayer are all standard and well documented.</span></li>
+      <li><b>Made the first view useful</b><span>A drawn sample image means the page never opens empty.</span></li>
+      <li><b>Kept dragging smooth</b><span><code>requestAnimationFrame</code> groups many slider events into one redraw.</span></li>
+      <li><b>Checked what I could</b><span>A JavaScript syntax check and a check that every element id the script uses exists in the HTML.</span></li>
+    </ol>
+    <p class="honest">I didn't open the app in a browser before giving it to you, so its look and real-world speed haven't been tested on many photos. Large widths with "Keep colors" on are the heaviest setting.</p>
+  </section>
+
+  <footer>Explains <code>glyph-darkroom.html</code>. The live strips and the letter picker run the same formulas as the app.</footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  // ---- Shrink figure: big grid -> small grid (shades from a soft sphere) ----
+  function shade(x, y, w, h) {
+    var dx = (x + 0.5) / w - 0.45, dy = (y + 0.5) / h - 0.4;
+    var d = Math.sqrt(dx * dx + dy * dy * 1.6);
+    return Math.max(0, Math.min(1, 1 - d * 1.7));
+  }
+  var big = $("bigGrid");
+  for (var y = 0; y < 18; y++) for (var x = 0; x < 24; x++) {
+    var v = shade(x, y, 24, 18), c = Math.round(30 + v * 210);
+    el("rect", { x: 20 + x * 10, y: 40 + y * 10, width: 10, height: 10, style: "fill:rgb(" + c + "," + Math.round(c * 0.75) + "," + Math.round(c * 0.55) + ")" }, big);
+  }
+  var small = $("smallGrid");
+  for (var sy = 0; sy < 6; sy++) for (var sx = 0; sx < 12; sx++) {
+    var sv = shade(sx * 2, sy * 3, 24, 18), sc = Math.round(30 + sv * 210);
+    el("rect", { x: 384 + sx * 16, y: 82 + sy * 16, width: 16, height: 16, style: "fill:rgb(" + sc + "," + Math.round(sc * 0.75) + "," + Math.round(sc * 0.55) + ")", "class": "cellg" }, small);
+  }
+
+  // ---- Luminance lab ----
+  var RAMP = " .:-=+*#%@";
+  var rampEl = $("ramp");
+  var cells = RAMP.split("").map(function (ch, i) {
+    var s = document.createElement("span"); s.textContent = ch === " " ? "␣" : ch; s.title = "position " + i;
+    rampEl.appendChild(s); return s;
+  });
+  function lab() {
+    var r = +$("rR").value, g = +$("rG").value, b = +$("rB").value;
+    $("oR").textContent = r; $("oG").textContent = g; $("oB").textContent = b;
+    $("sw").style.background = "rgb(" + r + "," + g + "," + b + ")";
+    var L = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    var idx = Math.min(RAMP.length - 1, Math.floor(L * RAMP.length));
+    $("math").innerHTML = "0.21×" + r + " + 0.72×" + g + " + 0.07×" + b + "<br>= <b>" + (L * 255).toFixed(1) + "</b> of 255 → <b>" + Math.round(L * 100) + "%</b> bright";
+    cells.forEach(function (c, i) { c.classList.toggle("on", i === idx); });
+    $("rampIdx").textContent = Math.round(L * 100) + "% × " + RAMP.length + " letters = position " + idx + " → \"" + (RAMP[idx] === " " ? "space" : RAMP[idx]) + "\"";
+  }
+  ["rR", "rG", "rB"].forEach(function (id) { $(id).addEventListener("input", lab); });
+  lab();
+
+  // ---- Dither strips (same maths as the app) ----
+  var W = 100, H = 24;
+  function gradient() { var L = new Float32Array(W * H); for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) L[y * W + x] = x / (W - 1); return L; }
+  function add(L, x, y, v) { if (x >= 0 && x < W && y < H) L[y * W + x] += v; }
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function dither(method) {
+    var L = gradient(), bits = new Uint8Array(W * H);
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var p = y * W + x, v = L[p], on;
+      if (method === "bay") on = v > (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
+      else on = v > 0.5;
+      bits[p] = on ? 1 : 0;
+      var err = v - (on ? 1 : 0);
+      if (method === "fs") { add(L, x + 1, y, err * 7 / 16); add(L, x - 1, y + 1, err * 3 / 16); add(L, x, y + 1, err * 5 / 16); add(L, x + 1, y + 1, err / 16); }
+      if (method === "atk") { var e = err / 8; add(L, x + 1, y, e); add(L, x + 2, y, e); add(L, x - 1, y + 1, e); add(L, x, y + 1, e); add(L, x + 1, y + 1, e); add(L, x, y + 2, e); }
+    }
+    return bits;
+  }
+  function paint(id, fn) {
+    var c = $(id), ctx = c.getContext("2d"), s = c.width / W;
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) { ctx.fillStyle = fn(x, y); ctx.fillRect(x * s, y * s, s, s); }
+  }
+  paint("d-src", function (x) { var g = Math.round(x / (W - 1) * 255); return "rgb(" + g + "," + g + "," + g + ")"; });
+  [["d-none", "none"], ["d-fs", "fs"], ["d-atk", "atk"], ["d-bay", "bay"]].forEach(function (pair) {
+    var bits = dither(pair[1]);
+    paint(pair[0], function (x, y) { return bits[y * W + x] ? "#f7f7f2" : "#111111"; });
+  });
+
+  // ---- Kernel diagrams ----
+  function kernel(id, cols, rows, me, weights, labelFn) {
+    var g = $(id), size = 40, ox = (230 - cols * size) / 2, oy = (130 - rows * size) / 2;
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var key = x + "," + y, w = weights[key];
+      var cls = (x === me[0] && y === me[1]) ? "cell-me" : (w !== undefined ? "cell-hot" : "cell-w");
+      el("rect", { x: ox + x * size, y: oy + y * size, width: size - 3, height: size - 3, rx: 5, "class": cls }, g);
+      var label = labelFn ? labelFn(x, y) : (w !== undefined ? w : "");
+      if (label !== "") {
+        var t = el("text", { x: ox + x * size + (size - 3) / 2, y: oy + y * size + (size - 3) / 2 + 4, "text-anchor": "middle", "class": "tc-p" }, g);
+        t.textContent = label;
+      }
+    }
+  }
+  kernel("k-fs", 3, 2, [1, 0], { "2,0": "7/16", "0,1": "3/16", "1,1": "5/16", "2,1": "1/16" });
+  kernel("k-atk", 4, 3, [1, 0], { "2,0": "1/8", "3,0": "1/8", "0,1": "1/8", "1,1": "1/8", "2,1": "1/8", "1,2": "1/8" });
+  var BM = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  (function () {
+    var g = $("k-bay"), size = 28, ox = (230 - 4 * size) / 2, oy = (130 - 4 * size) / 2;
+    for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) {
+      var v = BM[y * 4 + x];
+      el("rect", { x: ox + x * size, y: oy + y * size, width: size - 2, height: size - 2, rx: 4, "class": "cell-w", style: "fill-opacity:1" }, g);
+      var t = el("text", { x: ox + x * size + (size - 2) / 2, y: oy + y * size + (size - 2) / 2 + 4, "text-anchor": "middle", "class": "tc" }, g);
+      t.textContent = v;
+    }
+  })();
+
+  // ---- Palette match row ----
+  var PICO = ["#000000","#1d2b53","#7e2553","#008751","#ab5236","#5f574f","#c2c3c7","#fff1e8","#ff004d","#ffa300","#ffec27","#00e436","#29adff","#83769c","#ff77a8","#ffccaa"];
+  var px = [232, 128, 60];
+  function rgb(h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  var dists = PICO.map(function (h) { var c = rgb(h), dr = px[0] - c[0], dg = px[1] - c[1], db = px[2] - c[2]; return Math.sqrt(dr * dr * 0.3 + dg * dg * 0.59 + db * db * 0.11); });
+  var best = dists.indexOf(Math.min.apply(null, dists));
+  var row = $("palRow");
+  PICO.forEach(function (h, i) {
+    var x = 200 + i * 40, isBest = i === best;
+    el("rect", { x: x, y: isBest ? 58 : 66, width: 34, height: isBest ? 64 : 48, rx: 6, style: "fill:" + h, stroke: isBest ? "currentColor" : "none", "stroke-width": isBest ? 3 : 0, "class": isBest ? "" : "" }, row);
+    var t = el("text", { x: x + 17, y: 144, "text-anchor": "middle", "class": isBest ? "tc-p" : "tm" }, row);
+    t.textContent = Math.round(dists[i]);
+  });
+  var lbl = el("text", { x: 200 + best * 40 + 17, y: 48, "text-anchor": "middle", "class": "tc-p" }, row);
+  lbl.textContent = "closest";
+})();
+</script>
+
+</body>
+</html>
