@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glyph Darkroom TV</title>
+<meta name="description" content="Tune any photo into ASCII art, pixel art or a 1-bit print on a retro CRT television. Runs entirely in your browser.">
+<meta name="theme-color" content="#0d0b0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/crt-tv.css">
+</head>
+<body>
+<main class="room">
+  <h1 class="sr-only">Glyph Darkroom: photo to ASCII, pixel art and 1-bit, on a CRT TV</h1>
+  <p class="sr-only" id="live" role="status" aria-live="polite"></p>
+
+  <div class="tv" id="tv">
+    <div class="cabinet">
+
+      <div class="bezel">
+        <div class="screen" id="screenBox">
+          <canvas id="screen" role="img" aria-label="TV screen"></canvas>
+          <div class="glass" aria-hidden="true"></div>
+
+          <div class="osd-menu" id="menu" role="dialog" aria-labelledby="menuTitle" hidden>
+            <p class="menu-title" id="menuTitle">PICTURE</p>
+            <ul class="menu-list" id="menuList"></ul>
+            <p class="menu-hint" aria-hidden="true">↑↓ SELECT · ←→ CHANGE · M EXIT</p>
+          </div>
+        </div>
+        <span class="badge" aria-hidden="true">GLYPHVISION</span>
+      </div>
+
+      <div class="panel">
+        <div class="brand">
+          <span class="logo">GLYPH</span>
+          <span class="model">DARKROOM GD&#8209;1</span>
+        </div>
+
+        <div class="channel">
+          <span class="ch-label" data-ch="1" style="--a:-60deg" aria-hidden="true">ASCII</span>
+          <span class="ch-label" data-ch="2" style="--a:0deg" aria-hidden="true">PIXEL</span>
+          <span class="ch-label" data-ch="3" style="--a:60deg" aria-hidden="true">1&#8209;BIT</span>
+          <div class="knob big" id="chKnob" role="slider" tabindex="0" aria-label="Channel" title="Channel · keys 1, 2, 3">
+            <div class="knob-cap"><i class="knob-mark"></i></div>
+          </div>
+          <span class="engrave">CHANNEL</span>
+        </div>
+
+        <div class="knobs">
+          <div class="knob-block">
+            <div class="knob" id="detailKnob" role="slider" tabindex="0" aria-label="Detail width" title="Detail · drag, scroll or arrow keys · double-click to reset">
+              <div class="knob-cap"><i class="knob-mark"></i></div>
+            </div>
+            <span class="engrave">DETAIL</span>
+          </div>
+          <div class="knob-block">
+            <div class="knob" id="brightKnob" role="slider" tabindex="0" aria-label="Brightness" title="Brightness · double-click to reset">
+              <div class="knob-cap"><i class="knob-mark"></i></div>
+            </div>
+            <span class="engrave">BRIGHT</span>
+          </div>
+          <div class="knob-block">
+            <div class="knob" id="contrastKnob" role="slider" tabindex="0" aria-label="Contrast" title="Contrast · double-click to reset">
+              <div class="knob-cap"><i class="knob-mark"></i></div>
+            </div>
+            <span class="engrave">CONTR</span>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button type="button" class="btn" id="powerBtn" aria-pressed="false" title="Power · P"><i class="led" aria-hidden="true"></i>POWER</button>
+          <button type="button" class="btn" id="menuBtn" aria-expanded="false" aria-controls="menu" title="Picture menu · M">MENU</button>
+          <button type="button" class="btn" id="saveBtn" title="Save a clean PNG · S"><i class="rec" aria-hidden="true"></i>SAVE</button>
+          <button type="button" class="btn" id="copyBtn" aria-disabled="false" title="Copy ASCII text · C">COPY</button>
+        </div>
+
+        <div class="grille" aria-hidden="true"></div>
+
+        <label class="slot" for="file" title="Insert an image · O">
+          <input type="file" id="file" accept="image/*" class="sr-only">
+          <span class="slot-mouth" aria-hidden="true"></span>
+          <span class="slot-text">INSERT IMAGE</span>
+          <span class="slot-sub">click · drop · paste</span>
+        </label>
+
+        <a class="manual" href="glyph-darkroom-explained.html">OWNER'S MANUAL ↗</a>
+      </div>
+
+    </div>
+    <div class="feet" aria-hidden="true"><i></i><i></i></div>
+  </div>
+
+  <p class="room-note" aria-hidden="true">1 2 3 CHANNEL · M MENU · O OPEN · S SAVE · C COPY · P POWER</p>
+</main>
+
+<script src="js/glyph-engine.js"></script>
+<script src="js/crt-sound.js"></script>
+<script src="js/crt-screen.js"></script>
+<script src="js/crt-tv.js"></script>
+</body>
+</html>

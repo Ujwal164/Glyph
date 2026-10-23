@@ -4,35 +4,59 @@ Turn any photo into **ASCII art**, **pixel art** or **1‑bit dithered prints**,
 
 No server, no install, no dependencies. Your image never leaves your device. Just plain HTML, CSS and JavaScript.
 
+## Glyph Darkroom TV
+
+The main experience (`index.html`) is a retro CRT television that fills one screen, with no scrolling. Every control is part of the TV:
+
+| Control | What it does |
+| --- | --- |
+| **Channel knob** | CH 1 ASCII · CH 2 PIXEL · CH 3 1‑BIT, with a burst of static on every switch |
+| **DETAIL / BRIGHT / CONTR knobs** | Drag, scroll or use arrow keys; double‑click to reset. An on‑screen level bar shows the value |
+| **MENU** | Green on‑screen menu with the options for the current channel, CRT effect level, sound and reset |
+| **POWER** | Classic CRT power on/off: line, then dot |
+| **SAVE / COPY** | Save a clean PNG (no CRT effects) · copy the ASCII text |
+| **INSERT IMAGE slot** | Click to pick an image, or drop or paste one anywhere |
+
+The screen is rendered with a WebGL shader: curved glass, scanlines, shadow mask, colour fringing, glow, vignette and static. Without WebGL, it falls back to plain 2D with CSS scanlines. Sounds are synthesised with the Web Audio API and stay off until you turn them on in the menu.
+
+**Keyboard:** `1` `2` `3` channel · `M` menu · `O` open image · `S` save · `C` copy · `P` power
+
 ## Files
 
 ```
-├── glyph-darkroom.html             # the app
-├── glyph-darkroom-explained.html   # how the app works (self-contained)
+├── index.html                      # the CRT TV (start here)
+├── glyph-darkroom.html             # the original panel-style app
+├── glyph-darkroom-explained.html   # how the conversion works (self-contained)
 ├── css/
+│   ├── crt-tv.css
 │   └── glyph-darkroom.css
 └── js/
-    └── glyph-darkroom.js
+    ├── glyph-engine.js             # image → ASCII / pixel / 1-bit (no UI)
+    ├── crt-screen.js               # WebGL CRT shader
+    ├── crt-sound.js                # Web Audio sound effects
+    ├── crt-tv.js                   # TV controls, menu, power and channels
+    └── glyph-darkroom.js           # original app
 ```
 
 | Page | What it is |
 | --- | --- |
-| [`glyph-darkroom.html`](glyph-darkroom.html) | The app. Open it in any modern browser. |
-| [`glyph-darkroom-explained.html`](glyph-darkroom-explained.html) | An illustrated, interactive walkthrough of how the app works: the pipeline, the luminance formula, dithering kernels and palette matching. |
+| [`index.html`](index.html) | The CRT TV version. Open it in any modern browser. |
+| [`glyph-darkroom.html`](glyph-darkroom.html) | The original app with a classic control panel. |
+| [`glyph-darkroom-explained.html`](glyph-darkroom-explained.html) | An illustrated, interactive walkthrough of how the conversion works: the pipeline, the luminance formula, dithering kernels and palette matching. |
 
-Keep the `css/` and `js/` folders next to `glyph-darkroom.html`, since the app loads them by relative path. The explainer page has everything inline and works on its own.
+Keep the `css/` and `js/` folders next to the HTML files, since the pages load them by relative path. The explainer page has everything inline and works on its own.
 
 ## Getting started
 
 1. Download or clone this repo.
-2. Open `glyph-darkroom.html` in your browser.
-3. Drop, paste or pick an image. A sample image is shown until you load one.
-4. Choose a style, tweak the sliders, then copy the text or save a PNG.
+2. Open `index.html` in your browser.
+3. Drop, paste or insert an image. A sample image is shown until you load one.
+4. Turn the knobs, pick a channel, then save a PNG or copy the text.
 
 ```bash
 git clone https://github.com/Ujwal164/Glyph.git
 cd Glyph
-# then open glyph-darkroom.html in your browser
+# then open index.html in your browser
 ```
 
 ## Styles
@@ -71,7 +95,7 @@ For the full illustrated explanation, with live demos, open [`glyph-darkroom-exp
 
 ## Built with
 
-Only built‑in browser APIs: Canvas 2D, `URL.createObjectURL`, drag‑and‑drop and paste events, `canvas.toBlob()` and the Clipboard API.
+Only built‑in browser APIs: Canvas 2D, WebGL, Web Audio, `URL.createObjectURL`, drag‑and‑drop and paste events, `canvas.toBlob()` and the Clipboard API.
 
 ## License
 
